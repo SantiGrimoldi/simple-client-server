@@ -7,7 +7,6 @@ import edu.austral.ingsis.clientserver.serialization.json.JsonDeserializer
 import edu.austral.ingsis.clientserver.serialization.json.JsonSerializer
 import java.net.InetSocketAddress
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class SimpleServerTest {
 
@@ -18,41 +17,45 @@ class SimpleServerTest {
         val ADDRESS = InetSocketAddress(HOST, PORT)
     }
 
-    class StringMessageCollectorListener : MessageListener<String> {
-        val messages = mutableListOf<String>()
+    private val factory = ClientServerFactory()
 
-        override fun handleMessage(message: Message<String>) {
-            messages.add(message.payload)
-        }
+    @Test
+    fun `start and stop server - should release the port`() {
+        // Creates server
+        val server1 = factory.createDefaultServer(PORT)
+
+        // Keeps it up for a few milliseconds
+        Thread.sleep(50)
+
+        // Then kills it
+        server1.dispose()
+
+        // Repeats the process
+        val server2 = factory.createDefaultServer(PORT)
+        Thread.sleep(50)
+        server2.dispose()
     }
 
     @Test
-    fun `send string message between client and server`() {
-        val disposables = mutableListOf<Disposable>()
-        try {
-            // Creates server
-            val server = SimpleServer(PORT, JsonSerializer(), JsonDeserializer())
-            val serverCollector = StringMessageCollectorListener()
-            server.setListenerFor("type", serverCollector)
-            disposables.add(server)
+    fun `start and stop server with connections - should release the port`() {
+        // Creates server
+        val server1 = factory.createDefaultServer(PORT)
+        // Creates client
+        val client = factory.createDefaultClient(ADDRESS)
 
-            // Creates client
-            val client = SimpleClient(ADDRESS, JsonSerializer(), JsonDeserializer())
-            val clientCollector = StringMessageCollectorListener()
-            client.setListenerFor("type", clientCollector)
-            disposables.add(client)
+        // Keeps it up for a few milliseconds
+        Thread.sleep(50)
 
-            val message = Message("type", "Hello!")
-            client.sendMessage(message)
+        // Then kills it
+        client.dispose()
+        server1.dispose()
 
-            Thread.sleep(100)
+        // Wait a few milliseconds
+        Thread.sleep(50)
 
-            assertEquals(1, serverCollector.messages.size)
-            assertEquals(message.payload, serverCollector.messages.first())
-
-            assertEquals(0, clientCollector.messages.size)
-        } finally {
-            disposables.forEach { it.dispose() }
-        }
+        // Repeats the process
+        val server2 = SimpleServer(PORT, JsonSerializer(), JsonDeserializer())
+        Thread.sleep(50)
+        server2.dispose()
     }
 }

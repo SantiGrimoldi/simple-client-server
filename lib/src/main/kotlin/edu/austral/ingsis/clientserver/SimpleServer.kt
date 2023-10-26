@@ -13,6 +13,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.nio.charset.Charset
+import java.util.concurrent.TimeUnit.SECONDS
 
 class SimpleServer(
     private val port: Int,
@@ -81,7 +82,16 @@ class SimpleServer(
     }
 
     override fun dispose() {
-        acceptor.unbind()
-        acceptor.dispose(true)
+        clients.forEach {
+            if (it.isConnected && !it.isClosing) {
+                it.closeFuture.await(1, SECONDS)
+            }
+        }
+
+        Thread.sleep(50)
+
+        if (acceptor.isActive && !acceptor.isDisposing) {
+            acceptor.dispose(true)
+        }
     }
 }

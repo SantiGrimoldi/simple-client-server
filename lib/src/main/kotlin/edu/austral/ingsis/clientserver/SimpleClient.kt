@@ -38,6 +38,10 @@ class SimpleClient(
             override fun messageReceived(session: IoSession?, message: Any?) {
                 listenerContainer.handleMessage(message.toString())
             }
+
+            override fun sessionClosed(session: IoSession) {
+                dispose()
+            }
         }
 
         val future = connector.connect(serverAddress)
@@ -71,7 +75,12 @@ class SimpleClient(
     }
 
     override fun dispose() {
-        session.closeNow()
-        connector.dispose(true)
+        if (session.isConnected && !session.isClosing) {
+            session.closeFuture.await(1, SECONDS)
+        }
+
+        if (connector.isActive && !connector.isDisposing) {
+            connector.dispose(true)
+        }
     }
 }
