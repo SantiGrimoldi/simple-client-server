@@ -4,11 +4,41 @@ plugins {
 
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
+    id 'maven-publish'
 }
+
+group = "edu.austral.dissis.chess"
+version = "1.0.0"
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+}
+
+java {
+    withSourcesJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = URI.create("https://maven.pkg.github.com/austral-ingsis/simple-client-server")
+            credentials {
+                username = System.getenv("GITHUB_USER")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+
+    publications {
+        gpr(MavenPublication) {
+
+            artifactId = "simple-client-server"
+
+            from(components.java)
+        }
+    }
 }
 
 dependencies {
