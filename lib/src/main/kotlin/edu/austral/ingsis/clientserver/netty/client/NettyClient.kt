@@ -14,6 +14,8 @@ import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder
+import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.codec.bytes.ByteArrayDecoder
 import io.netty.handler.codec.bytes.ByteArrayEncoder
 import java.net.SocketAddress
@@ -74,8 +76,8 @@ internal class NettyClient(
             @Throws(Exception::class)
             override fun initChannel(ch: SocketChannel) {
                 ch.pipeline()
-                    .addLast(ByteArrayEncoder())
-                    .addLast(ByteArrayDecoder())
+                    .addLast(LengthFieldPrepender(4), ByteArrayEncoder())
+                    .addLast(LengthFieldBasedFrameDecoder(1_048_576, 0, 4, 0, 4), ByteArrayDecoder())
                     .addLast(clientChannelHandler)
             }
         })
