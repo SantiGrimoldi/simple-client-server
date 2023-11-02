@@ -43,9 +43,8 @@ publishing {
 
 dependencies {
     // Connections
-    implementation 'org.apache.mina:mina-core:2.2.3'
-
-
+    // Netty
+    implementation 'io.netty:netty-all:4.1.100.Final'
 
     // Serialization
     implementation 'com.fasterxml.jackson.core:jackson-core:2.15.3'
